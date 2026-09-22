@@ -1,0 +1,22 @@
+<h1>RESULT</h1>
+
+<br><br>
+
+<h3>Transaction {{ .status }}</h3>
+<p>{{ .error }}</p>
+
+<br>
+
+<!-- with js -->
+<!-- <button onclick="location.href='http://localhost:8080/api/v1/products';">back to site</button> -->
+<!-- <button onclick="document.location='http://localhost:8080/api/v1/products'">back to site</button> -->
+
+<!-- with form -->
+<form method="POST" action="http://localhost:8080/api/v1/orders/result">
+	<input type="submit" value="Back to site">
+</form>
+
+<!-- with hyperlink -->
+<!-- <button>
+	<a href="http://localhost:8080/api/v1/products" style="">Back to Site</a>
+</button> -->
