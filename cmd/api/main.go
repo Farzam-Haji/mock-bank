@@ -40,18 +40,21 @@ func main() {
 
 	//constructors
 	repoInterface := repositories.NewPostgresBankRepo(db)
-	serviceInterface := services.NewBankService(repoInterface)
+	serviceInterface := services.NewBankService(repoInterface, os.Getenv("CALLBACK_URL"))
 	bankHandler := handlers.NewBankHanler(serviceInterface)
 
 
 	// Gin
 	engine := gin.Default()
+	engine.LoadHTMLGlob("././templates/*")
 
 	api := engine.Group("/api")
 	v1 := api.Group("/v1")
 	v1.GET("/ping", handlers.Ping)
 
 	v1.POST("/payments", bankHandler.CreatePayment)
+	v1.GET("/payments/:id", bankHandler.ShowPayment)
+	v1.POST("/payments/:id", bankHandler.ProcessPayment)
 
 	engine.Run("localhost:8081")
 }
