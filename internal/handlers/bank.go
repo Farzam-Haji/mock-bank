@@ -128,8 +128,11 @@ func (h *BankHandler) ProcessPayment(c *gin.Context) {
 		)
 	}
 
+	resultURL := fmt.Sprintf("http://localhost:8080/api/v1/orders/%d", payment.MerchantOrderID)
+
 	c.HTML(resultCode, "result.html", gin.H{
 		"status": payment.Status,
 		"error": resultErr,
+		"result_url": resultURL,
 	})
 }

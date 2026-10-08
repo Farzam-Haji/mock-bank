@@ -77,14 +77,13 @@ func (r *PostgresBankRepo) ProcessPayment(ctx context.Context, payment *models.P
 
 	//get payment
 	query := `
-		SELECT merchant_order_id, status, amount
+		SELECT status, amount
 		FROM payments
 		WHERE id = $1
-	`
+	` //status-amount
 	row := tx.QueryRowContext(ctx, query, payment.ID)
 
 	if err = row.Scan(
-		&payment.MerchantOrderID,
 		&payment.Status,
 		&payment.Amount,
 	); err != nil {
@@ -150,18 +149,21 @@ func (r *PostgresBankRepo) ProcessPayment(ctx context.Context, payment *models.P
 			account_id = $1
 		WHERE id = $2
 			AND status = 'pending'
+		RETURNING merchant_order_id, account_id, status
 	`		
-	result, err = tx.ExecContext(ctx, query, account.ID, payment.ID)
-	if err != nil {
-		return err
-	}
+	row = tx.QueryRowContext(ctx, query, account.ID, payment.ID)
 
-	affected, err = result.RowsAffected()
+	err = row.Scan(
+		&payment.MerchantOrderID,
+		&payment.AccountID,
+		&payment.Status,
+	)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return ErrNonPending
+	}
 	if err != nil {
 		return err
-	}
-	if affected != 1 {
-		return ErrNonPending
 	}
 
 
@@ -179,18 +181,20 @@ func (r *PostgresBankRepo) UpdateFailedPayment(ctx context.Context, payment *mod
 			updated_at = NOW()
 		WHERE id = $1
 			AND status = 'pending'
+		RETURNING status, merchant_order_id
 	`
-	result, err := r.db.ExecContext(ctx, query, payment.ID)
-	if err != nil {
-		return err
-	}
+	row := r.db.QueryRowContext(ctx, query, payment.ID)
 
-	affected, err := result.RowsAffected()
+	err := row.Scan(
+		&payment.Status,
+		&payment.MerchantOrderID,
+	)
+	
+	if errors.Is(err, sql.ErrNoRows) {
+		return ErrNonPending
+	}
 	if err != nil {
 		return err
-	}
-	if affected != 1 {
-		return ErrNonPending
 	}
 
 	return nil
